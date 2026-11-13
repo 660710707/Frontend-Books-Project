@@ -1,4 +1,3 @@
-
 const API_BASE = (
   process.env.REACT_APP_API_URL ||
   'https://bookhub-backend-7ldt.onrender.com'
@@ -49,7 +48,7 @@ async function apiFetch(path, options = {}) {
   return data;
 }
 
-// แปลงข้อมูลหนังสือ
+// แปลงข้อมูลหนังสือจาก Backend
 export function mapBook(book) {
   return {
     id: book.isbn,
@@ -62,12 +61,19 @@ export function mapBook(book) {
     genre: null,
     rating: book.rating ?? 0,
     ratingCount: book.ratingCount ?? 0,
+
     poster:
       book.imageUrl ||
       book.imageUrlM ||
       book.imageUrlS ||
       null,
-    detail: '',
+
+    // เรื่องย่อ
+    description: book.description || '',
+    descriptionSource: book.descriptionSource || '',
+    descriptionURL: book.descriptionUrl || '',
+
+    detail: book.description || '',
   };
 }
 
@@ -80,6 +86,7 @@ export async function getBooks(query = '') {
   }
 
   const queryString = params.toString();
+
   const path = queryString
     ? `/api/books?${queryString}`
     : '/api/books';

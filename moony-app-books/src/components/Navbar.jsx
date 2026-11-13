@@ -72,7 +72,7 @@ function Navbar() {
           ) : (
             <>
               <span className="hidden max-w-32 truncate text-sm font-semibold text-emerald-800 sm:block">
-                💚 {displayName}
+                💚 นักอ่าน{displayName}
               </span>
 
               <button

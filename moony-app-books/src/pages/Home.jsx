@@ -2,12 +2,21 @@
 import { useEffect, useMemo, useState } from 'react';
 import BookCard from '../components/BookCard';
 import { getBooks } from '../api/backend';
+import { useAuth } from '../context/AuthContext';
 
 function Home() {
+  const { member, isAuthenticated } = useAuth();
+
   const [books, setBooks] = useState([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  const memberName =
+    member?.displayName ||
+    member?.name ||
+    member?.email?.split('@')[0] ||
+    'นักอ่าน';
 
   useEffect(() => {
     let isMounted = true;
@@ -68,6 +77,7 @@ function Home() {
 
             <div className="flex items-center rounded-full border border-emerald-100 bg-white px-5 py-3 shadow-sm">
               <span className="mr-3 text-xl">⌕</span>
+
               <input
                 type="text"
                 value={search}
@@ -85,69 +95,198 @@ function Home() {
           {/* Left Sidebar */}
           <aside className="space-y-6 lg:col-span-3">
 
+            {/* Reading Challenge */}
             <section className="rounded-3xl bg-[#dcebe1] p-6">
               <p className="text-xs font-bold tracking-widest text-emerald-800">
                 YOUR READING JOURNEY
               </p>
 
-              <h2 className="mt-4 text-2xl font-bold leading-snug">
-                2026
-                <br />
-                READING CHALLENGE
-              </h2>
+              {isAuthenticated ? (
+                <>
+                  <h2 className="mt-4 text-2xl font-bold leading-snug">
+                    YOUR 2026
+                    <br />
+                    READING CHALLENGE
+                  </h2>
 
-              <p className="mt-3 text-sm leading-6 text-slate-600">
-                Challenge Yourself to Read More This Year.
-              </p>
+                  <p className="mt-3 text-sm leading-6 text-slate-600">
+                    Challenge Yourself to Read More This Year.
+                  </p>
 
-              <div className="mt-6 rounded-2xl bg-white/70 p-4">
-                <p className="text-sm font-semibold">พร้อมเริ่มอ่านหรือยัง?</p>
-                <p className="mt-1 text-xs text-slate-500">
-                  ค้นพบหนังสือเล่มโปรดเล่มใหม่ของคุณ
-                </p>
-              </div>
+                  <div className="mt-6 rounded-2xl bg-white/80 p-4">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-semibold">
+                        Reading Progress
+                      </p>
+
+                      <span className="text-sm font-bold text-emerald-700">
+                        0 / 12
+                      </span>
+                    </div>
+
+                    <div className="mt-3 h-2 overflow-hidden rounded-full bg-emerald-100">
+                      <div className="h-full w-0 rounded-full bg-emerald-600" />
+                    </div>
+
+                    <p className="mt-3 text-xs leading-5 text-slate-500">
+                      เริ่มต้นอ่านหนังสือเล่มแรกของคุณกันเถอะ!
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h2 className="mt-4 text-2xl font-bold leading-snug">
+                    2026
+                    <br />
+                    READING CHALLENGE
+                  </h2>
+
+                  <p className="mt-3 text-sm leading-6 text-slate-600">
+                    Challenge Yourself to Read More This Year.
+                  </p>
+
+                  <div className="mt-6 rounded-2xl bg-white/70 p-4">
+                    <p className="text-sm font-semibold">
+                      พร้อมเริ่มอ่านหรือยัง?
+                    </p>
+
+                    <p className="mt-1 text-xs text-slate-500">
+                      ค้นพบหนังสือเล่มโปรดเล่มใหม่ของคุณ
+                    </p>
+                  </div>
+                </>
+              )}
             </section>
 
+            {/* The Book Shelves */}
             <section className="rounded-3xl bg-white p-6 shadow-sm">
-              <h2 className="text-lg font-bold">THE BOOK SHELVES</h2>
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-bold">
+                  THE BOOK SHELVES
+                </h2>
 
-              <div className="mt-5 space-y-4 text-sm">
-                <div className="flex justify-between">
-                  <span>Want to Read</span>
-                  <span className="text-slate-400">—</span>
-                </div>
-
-                <div className="flex justify-between">
-                  <span>Currently Reading</span>
-                  <span className="text-slate-400">—</span>
-                </div>
-
-                <div className="flex justify-between">
-                  <span>Completed</span>
-                  <span className="text-slate-400">—</span>
-                </div>
+                {isAuthenticated && (
+                  <span className="text-xs font-semibold text-emerald-700">
+                    MY BOOKS
+                  </span>
+                )}
               </div>
 
-              <p className="mt-5 text-xs leading-5 text-slate-400">
-                ชั้นหนังสือส่วนตัวจะเชื่อมกับระบบสมาชิกในขั้นตอนถัดไป
-              </p>
+              {isAuthenticated ? (
+                <div className="mt-5 space-y-3">
+
+                  <div className="rounded-2xl bg-[#eef5f0] p-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-semibold">
+                        Want to Read
+                      </span>
+
+                      <span className="text-sm font-bold text-emerald-700">
+                        0
+                      </span>
+                    </div>
+
+                    <p className="mt-1 text-xs text-slate-500">
+                      หนังสือที่คุณอยากอ่าน
+                    </p>
+                  </div>
+
+                  <div className="rounded-2xl bg-[#eef5f0] p-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-semibold">
+                        Currently Reading
+                      </span>
+
+                      <span className="text-sm font-bold text-emerald-700">
+                        0
+                      </span>
+                    </div>
+
+                    <p className="mt-1 text-xs text-slate-500">
+                      หนังสือที่คุณกำลังอ่าน
+                    </p>
+                  </div>
+
+                  <div className="rounded-2xl bg-[#eef5f0] p-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-semibold">
+                        Completed
+                      </span>
+
+                      <span className="text-sm font-bold text-emerald-700">
+                        0
+                      </span>
+                    </div>
+
+                    <p className="mt-1 text-xs text-slate-500">
+                      หนังสือที่คุณอ่านจบแล้ว
+                    </p>
+                  </div>
+
+                  <p className="pt-2 text-xs leading-5 text-slate-400">
+                    เริ่มเพิ่มหนังสือเล่มโปรดลงในชั้นหนังสือของคุณได้เร็ว ๆ นี้
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <div className="mt-5 space-y-4 text-sm">
+                    <div className="flex justify-between">
+                      <span>Want to Read</span>
+                      <span className="text-slate-400">—</span>
+                    </div>
+
+                    <div className="flex justify-between">
+                      <span>Currently Reading</span>
+                      <span className="text-slate-400">—</span>
+                    </div>
+
+                    <div className="flex justify-between">
+                      <span>Completed</span>
+                      <span className="text-slate-400">—</span>
+                    </div>
+                  </div>
+
+                  <p className="mt-5 text-xs leading-5 text-slate-400">
+                    ชั้นหนังสือส่วนตัวจะเชื่อมกับระบบสมาชิกในขั้นตอนถัดไป
+                  </p>
+                </>
+              )}
             </section>
           </aside>
 
           {/* Center Content */}
           <section className="lg:col-span-6">
 
-            <div className="mb-5 flex items-center justify-between">
-              <div>
-                <p className="text-xs font-bold tracking-widest text-emerald-700">
-                  DISCOVER YOUR NEXT READ
-                </p>
-                <h2 className="mt-1 text-2xl font-bold">
-                  Trending Books
-                </h2>
-              </div>
+            {/* Member / Guest Welcome */}
+            <div className="mb-5">
+              {isAuthenticated ? (
+                <>
+                  <p className="text-xs font-bold tracking-widest text-emerald-700">
+                    YOUR PERSONAL READING SPACE
+                  </p>
+
+                  <h2 className="mt-1 text-2xl font-bold">
+                    Welcome back คุณนักอ่าน{memberName}!
+                  </h2>
+
+                  <p className="mt-2 text-sm text-slate-500">
+                    พร้อมออกเดินทางไปกับเรื่องราวใหม่ ๆ หรือยัง?
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-xs font-bold tracking-widest text-emerald-700">
+                    DISCOVER YOUR NEXT READ
+                  </p>
+
+                  <h2 className="mt-1 text-2xl font-bold">
+                    Trending Books
+                  </h2>
+                </>
+              )}
             </div>
 
+            {/* Trending Books */}
             {loading ? (
               <div className="rounded-2xl bg-white p-8 text-center text-slate-500">
                 กำลังโหลดข้อมูลหนังสือ...
@@ -168,10 +307,14 @@ function Home() {
               </div>
             )}
 
+            {/* Suggestions */}
             {!search && suggestions.length > 0 && (
               <section className="mt-10">
                 <div className="mb-5 flex items-center justify-between">
-                  <h2 className="text-2xl font-bold">Suggestions</h2>
+                  <h2 className="text-2xl font-bold">
+                    Suggestions
+                  </h2>
+
                   <span className="text-xs text-slate-500">
                     More books to explore
                   </span>
@@ -189,9 +332,12 @@ function Home() {
           {/* Right Sidebar */}
           <aside className="space-y-6 lg:col-span-3">
 
+            {/* Meet Your Favorite Book */}
             <section className="rounded-3xl bg-[#dcebe1] p-6">
               <div className="text-xs font-bold tracking-widest text-emerald-800">
-                WELCOME TO MOONY BOOKS
+                {isAuthenticated
+                  ? 'YOUR READING COMMUNITY'
+                  : 'WELCOME TO MOONY BOOKS'}
               </div>
 
               <h2 className="mt-4 text-2xl font-bold leading-snug">
@@ -207,10 +353,14 @@ function Home() {
 
               <div className="mt-6 rounded-2xl bg-white p-4 text-center">
                 <span className="text-4xl">📖</span>
-                <p className="mt-2 text-sm font-bold">Read. Review. Discover.</p>
+
+                <p className="mt-2 text-sm font-bold">
+                  Read. Review. Discover.
+                </p>
               </div>
             </section>
 
+            {/* Announcing the Best Books */}
             <section className="rounded-3xl bg-white p-6 shadow-sm">
               <h2 className="text-lg font-bold">
                 Announcing the Best Books
@@ -222,6 +372,7 @@ function Home() {
 
               <div className="mt-5 rounded-2xl bg-[#eef5f0] p-4 text-center">
                 <span className="text-4xl">✨</span>
+
                 <p className="mt-2 text-sm font-semibold">
                   Your next favorite story awaits.
                 </p>
@@ -234,8 +385,10 @@ function Home() {
       {/* Footer */}
       <footer className="mt-12 bg-[#dcebe1] px-6 py-10">
         <div className="mx-auto grid max-w-7xl grid-cols-2 gap-8 sm:grid-cols-4">
+
           <div>
             <h3 className="font-bold">Moony Books</h3>
+
             <p className="mt-3 text-sm text-slate-600">
               Your reading journey starts here.
             </p>
@@ -243,20 +396,38 @@ function Home() {
 
           <div>
             <h3 className="font-bold">Company</h3>
-            <p className="mt-3 text-sm text-slate-600">About us</p>
-            <p className="mt-2 text-sm text-slate-600">Careers</p>
+
+            <p className="mt-3 text-sm text-slate-600">
+              About us
+            </p>
+
+            <p className="mt-2 text-sm text-slate-600">
+              Careers
+            </p>
           </div>
 
           <div>
             <h3 className="font-bold">Explore</h3>
-            <p className="mt-3 text-sm text-slate-600">Books</p>
-            <p className="mt-2 text-sm text-slate-600">Community</p>
+
+            <p className="mt-3 text-sm text-slate-600">
+              Books
+            </p>
+
+            <p className="mt-2 text-sm text-slate-600">
+              Community
+            </p>
           </div>
 
           <div>
             <h3 className="font-bold">Support</h3>
-            <p className="mt-3 text-sm text-slate-600">Contact</p>
-            <p className="mt-2 text-sm text-slate-600">Help</p>
+
+            <p className="mt-3 text-sm text-slate-600">
+              Contact
+            </p>
+
+            <p className="mt-2 text-sm text-slate-600">
+              Help
+            </p>
           </div>
         </div>
 
