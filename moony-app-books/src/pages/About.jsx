@@ -20,7 +20,11 @@ function About() {
           kaggle
         </a>
         <p className="text-sm text-slate-500">
-          ข้อมูลหนังสือและปกทั้งหมดมาจาก book recommendation dataset จาก kaggle
+          ข้อมูลหนังสือและปกทั้งหมดมาจาก book recommendation dataset จาก kaggle 
+          <p className="text-sm text-slate-500">
+          This product uses the Book Recommendation Dataset API but is not endorsed or certified by the dataset provider.
+        </p>
+          
         </p>
       </div>
     </div>

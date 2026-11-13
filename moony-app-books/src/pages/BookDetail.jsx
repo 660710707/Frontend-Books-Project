@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { getBook } from '../api/backend';
+import ReviewForm from '../components/ReviewForm';
 
-function BookDetail() {
+function BookDetail({ wishlist = [], onToggleWishlist, onAddReview }) {
   const { id } = useParams();
 
   const [book, setBook] = useState(null);
@@ -77,6 +78,21 @@ function BookDetail() {
     );
   }
 
+  // เช็คสถานะ Wishlist
+  const currentBookId = book.id || book.isbn;
+  const isWishlisted = wishlist.some((item) => {
+    const itemId = typeof item === 'object' ? (item.id || item.isbn) : item;
+    return String(itemId) === String(currentBookId);
+  });
+
+  const reviewsList = book.reviews || [];
+
+  // ระบบดึงรูปภาพ: ถ้าหนังสือเล่มไหนมี ISBN ให้ใช้รูปปกมาตรฐานจาก Open Library ตาม ISBN ทันที เพื่อป้องกันรูปซ้ำหรือรูปผิดเล่ม
+  // หากไม่มี ISBN ค่อยไปดึงจากฟิลด์รูปอื่นๆ ในดาต้าเบส
+  const bookCover = book.isbn 
+    ? `https://covers.openlibrary.org/b/isbn/${book.isbn}-L.jpg`
+    : (book.poster || book.imageUrl || book.imageUrlM || book.imageUrlS || book.cover || book.image || book.thumbnail);
+
   return (
     <div className="min-h-screen bg-[#eef5f0] px-4 py-10 text-slate-800 sm:px-6">
       <main className="mx-auto max-w-5xl">
@@ -95,11 +111,15 @@ function BookDetail() {
           {/* Book Cover */}
           <div className="flex justify-center">
             <div className="flex aspect-[2/3] w-full max-w-[260px] items-center justify-center overflow-hidden rounded-2xl bg-[#eef5f0] p-4">
-              {book.poster ? (
+              {bookCover ? (
                 <img
-                  src={book.poster}
+                  src={bookCover}
                   alt={`ปกหนังสือ ${book.title}`}
-                  className="h-full w-full object-contain"
+                  className="h-full w-full object-cover rounded-xl"
+                  onError={(e) => {
+                    // ถ้าดึงรูปจาก ISBN แล้วเว็บปลายทางไม่มีรูป ให้ซ่อนรูปแล้วแสดงไอคอนสำรองแทน
+                    e.target.style.display = 'none';
+                  }}
                 />
               ) : (
                 <div className="text-center text-slate-400">
@@ -146,15 +166,88 @@ function BookDetail() {
               </span>
 
               <span className="text-sm text-slate-400">
-                ({book.ratingCount || 0} ratings)
+                ({book.ratingCount || reviewsList.length || 0} ratings)
               </span>
             </div>
 
             <p className="mt-4 text-xs text-slate-400">
-              ISBN: {book.isbn}
+              ISBN: {book.isbn || 'N/A'}
             </p>
+
+            {/* ปุ่มเพิ่มรายการโปรด (Wishlist) */}
+            <div className="mt-6">
+              <button
+                type="button"
+                onClick={() => {
+                  if (onToggleWishlist && book) {
+                    onToggleWishlist(book);
+                  }
+                }}
+                className={`rounded-full px-6 py-3 text-sm font-bold transition flex items-center justify-center gap-2 shadow-sm w-fit ${
+                  isWishlisted
+                    ? 'bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100'
+                    : 'bg-emerald-700 text-white hover:bg-emerald-800'
+                }`}
+              >
+                <span>{isWishlisted ? '❤️ อยู่ในรายการโปรดแล้ว' : '🤍 เพิ่มลงรายการโปรด'}</span>
+              </button>
+            </div>
           </div>
         </section>
+
+        {/* ส่วนฟอร์มรีวิว และ รายการรีวิว */}
+        <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+          
+          {/* ซ้าย: ฟอร์มเขียนรีวิว */}
+          <div className="lg:col-span-1">
+            <ReviewForm bookId={book.id || book.isbn} onAddReview={onAddReview} />
+          </div>
+
+          {/* ขวา: รายการรีวิวจากชุมชน */}
+          <div className="lg:col-span-2 rounded-3xl border border-emerald-100 bg-white p-6 shadow-sm sm:p-8 space-y-4">
+            <h2 className="text-xl font-bold text-slate-900">
+              รีวิวจากชุมชนนักอ่าน ({reviewsList.length})
+            </h2>
+
+            {reviewsList.length === 0 ? (
+              <div className="text-center py-10 bg-[#eef5f0] rounded-2xl">
+                <p className="text-sm font-medium text-slate-600">
+                  ยังไม่มีรีวิวสำหรับหนังสือเล่มนี้
+                </p>
+                <p className="text-xs text-slate-400 mt-1">
+                  มาเป็นคนแรกที่แบ่งปันความรู้สึกกันได้ทางซ้ายมือเลย!
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {reviewsList.map((rev) => (
+                  <div
+                    key={rev.id}
+                    className="p-4 rounded-2xl bg-[#eef5f0]/60 border border-emerald-100 space-y-2"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-full bg-emerald-700 text-white flex items-center justify-center font-bold text-xs">
+                          {rev.user ? rev.user.charAt(0) : 'U'}
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-slate-900">{rev.user || 'นักอ่านทั่วไป'}</p>
+                          <p className="text-[11px] text-slate-400">{rev.date || 'เร็วๆ นี้'}</p>
+                        </div>
+                      </div>
+                      <div className="bg-white px-3 py-1 rounded-full text-xs font-bold text-amber-500 border border-amber-100">
+                        {'★'.repeat(rev.rating || 5)}
+                      </div>
+                    </div>
+                    <p className="text-sm text-slate-700 leading-relaxed pt-1">
+                      {rev.comment}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
 
         {/* Synopsis */}
         <section className="mt-8 rounded-3xl border border-emerald-100 bg-white p-6 shadow-sm sm:p-8">

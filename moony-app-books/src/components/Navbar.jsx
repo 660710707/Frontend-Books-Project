@@ -1,14 +1,14 @@
-
 import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const navLinks = [
   { to: '/', label: 'หน้าแรก', end: true },
   { to: '/books', label: 'หนังสือทั้งหมด' },
+  { to: '/wishlist', label: 'รายการโปรด' }, // เพิ่มเมนูรายการโปรดเข้าไปในแถบเมนู
   { to: '/about', label: 'เกี่ยวกับเรา' },
 ];
 
-function Navbar() {
+function Navbar({ wishlistCount = 0 }) { // รับค่าจำนวนรายการโปรดมาแสดงเป็นตัวเลขกำกับ
   const { member, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -47,14 +47,30 @@ function Navbar() {
               to={link.to}
               end={link.end}
               className={({ isActive }) =>
-                `whitespace-nowrap rounded-full px-3 py-2 text-xs font-semibold transition-all duration-200 sm:px-5 sm:text-sm ${
+                `flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-2 text-xs font-semibold transition-all duration-200 sm:px-5 sm:text-sm ${
                   isActive
                     ? 'bg-emerald-600 text-white shadow-sm'
                     : 'text-slate-600 hover:bg-emerald-50 hover:text-emerald-700'
                 }`
               }
             >
-              {link.label}
+              {({ isActive }) => (
+                <>
+                  <span>{link.label}</span>
+                  {/* แสดงตัวเลขจำนวนหนังสือเฉพาะที่เมนูรายการโปรด */}
+                  {link.to === '/wishlist' && wishlistCount > 0 && (
+                    <span
+                      className={`flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[11px] font-bold ${
+                        isActive
+                          ? 'bg-white text-emerald-700'
+                          : 'bg-emerald-600 text-white'
+                      }`}
+                    >
+                      {wishlistCount}
+                    </span>
+                  )}
+                </>
+              )}
             </NavLink>
           ))}
         </div>
@@ -71,9 +87,14 @@ function Navbar() {
             </Link>
           ) : (
             <>
-              <span className="hidden max-w-32 truncate text-sm font-semibold text-emerald-800 sm:block">
+              {/* คลิกที่ชื่อนักอ่านก็สามารถลิงก์ไปหน้า Wishlist ได้เช่นกัน */}
+              <Link
+                to="/wishlist"
+                title="ดูรายการหนังสือโปรดของฉัน"
+                className="hidden max-w-36 truncate rounded-full px-3 py-1.5 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-50 sm:block"
+              >
                 💚 นักอ่าน{displayName}
-              </span>
+              </Link>
 
               <button
                 type="button"
