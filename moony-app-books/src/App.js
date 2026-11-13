@@ -1,29 +1,52 @@
+
 import { Routes, Route } from 'react-router-dom';
+
+import { AuthProvider } from './context/AuthContext';
+
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+
 import Home from './pages/Home';
 import Books from './pages/Books';
 import About from './pages/About';
 import BookDetail from './pages/BookDetail';
 import NotFound from './pages/NotFound';
-import Playground from './pages/Playground'; // ← เพิ่มบรรทัดนี้
+import Playground from './pages/Playground';
 
-function App() {
+import Login from './pages/Login';
+import Register from './pages/Register';
+
+function AppContent() {
   return (
     <div className="flex min-h-screen flex-col bg-slate-50">
-      <Navbar />                {/* ← เห็นทุกหน้า */}
+      <Navbar />
+
       <main className="flex-1">
-        <Routes>                {/* ← เฉพาะตรงนี้ที่สลับตาม URL */}
+        <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/books" element={<Books />} />
           <Route path="/about" element={<About />} />
           <Route path="/books/:id" element={<BookDetail />} />
-          <Route path="*" element={<NotFound />} />
+
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+
           <Route path="/playground" element={<Playground />} />
+
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
-      <Footer />                {/* ← เห็นทุกหน้า */}
+
+      <Footer />
     </div>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 
