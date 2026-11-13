@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { getBook } from '../api/backend';
 import ReviewForm from '../components/ReviewForm';
+import { useAuth } from '../context/AuthContext'; // 1. นำเข้า useAuth
 
 function BookDetail({ wishlist = [], onToggleWishlist, onAddReview }) {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const { isAuthenticated, member } = useAuth(); // 2. ดึงสถานะการเข้าสู่ระบบ
 
   const [book, setBook] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -78,20 +81,38 @@ function BookDetail({ wishlist = [], onToggleWishlist, onAddReview }) {
     );
   }
 
-  // เช็คสถานะ Wishlist
-  const currentBookId = book.id || book.isbn;
-  const isWishlisted = wishlist.some((item) => {
-    const itemId = typeof item === 'object' ? (item.id || item.isbn) : item;
-    return String(itemId) === String(currentBookId);
-  });
+  // ฟังก์ชันกลางเช็คว่าเป็นหนังสือเล่มเดียวกันหรือไม่
+  const isSameBook = (item1, item2) => {
+    if (!item1 || !item2) return false;
+    const getCode = (x) => {
+      if (typeof x === 'object' && x !== null) {
+        return String(x.isbn || x.id || x._id || '');
+      }
+      return String(x);
+    };
+    const code1 = getCode(item1);
+    const code2 = getCode(item2);
+    return code1 !== '' && code2 !== '' && code1 === code2;
+  };
 
+  const isWishlisted = wishlist.some((item) => isSameBook(item, book));
   const reviewsList = book.reviews || [];
 
-  // ระบบดึงรูปภาพ: ถ้าหนังสือเล่มไหนมี ISBN ให้ใช้รูปปกมาตรฐานจาก Open Library ตาม ISBN ทันที เพื่อป้องกันรูปซ้ำหรือรูปผิดเล่ม
-  // หากไม่มี ISBN ค่อยไปดึงจากฟิลด์รูปอื่นๆ ในดาต้าเบส
   const bookCover = book.isbn 
     ? `https://covers.openlibrary.org/b/isbn/${book.isbn}-L.jpg`
     : (book.poster || book.imageUrl || book.imageUrlM || book.imageUrlS || book.cover || book.image || book.thumbnail);
+
+  // ฟังก์ชันกดเพิ่ม/ลบ Wishlist (เช็คสิทธิ์ Login)
+  const handleWishlistClick = () => {
+    if (!isAuthenticated) {
+      alert('กรุณาเข้าสู่ระบบก่อนเพิ่มหนังสือลงในรายการโปรด');
+      navigate('/login');
+      return;
+    }
+    if (onToggleWishlist && book) {
+      onToggleWishlist(book);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#eef5f0] px-4 py-10 text-slate-800 sm:px-6">
@@ -117,7 +138,6 @@ function BookDetail({ wishlist = [], onToggleWishlist, onAddReview }) {
                   alt={`ปกหนังสือ ${book.title}`}
                   className="h-full w-full object-cover rounded-xl"
                   onError={(e) => {
-                    // ถ้าดึงรูปจาก ISBN แล้วเว็บปลายทางไม่มีรูป ให้ซ่อนรูปแล้วแสดงไอคอนสำรองแทน
                     e.target.style.display = 'none';
                   }}
                 />
@@ -174,15 +194,11 @@ function BookDetail({ wishlist = [], onToggleWishlist, onAddReview }) {
               ISBN: {book.isbn || 'N/A'}
             </p>
 
-            {/* ปุ่มเพิ่มรายการโปรด (Wishlist) */}
+            {/* ปุ่มเพิ่ม/ลบรายการโปรด (ตรวจสอบสิทธิ์ Login) */}
             <div className="mt-6">
               <button
                 type="button"
-                onClick={() => {
-                  if (onToggleWishlist && book) {
-                    onToggleWishlist(book);
-                  }
-                }}
+                onClick={handleWishlistClick}
                 className={`rounded-full px-6 py-3 text-sm font-bold transition flex items-center justify-center gap-2 shadow-sm w-fit ${
                   isWishlisted
                     ? 'bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100'
@@ -198,9 +214,29 @@ function BookDetail({ wishlist = [], onToggleWishlist, onAddReview }) {
         {/* ส่วนฟอร์มรีวิว และ รายการรีวิว */}
         <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
           
-          {/* ซ้าย: ฟอร์มเขียนรีวิว */}
+          {/* ซ้าย: ฟอร์มเขียนรีวิว (เช็คสิทธิ์ ถ้ายังไม่ล็อกอินให้แสดงกล่องชวนเข้าสู่ระบบ) */}
           <div className="lg:col-span-1">
-            <ReviewForm bookId={book.id || book.isbn} onAddReview={onAddReview} />
+            {isAuthenticated ? (
+              <ReviewForm 
+                bookId={book.id || book.isbn} 
+                onAddReview={onAddReview} 
+                currentUser={member?.displayName || member?.name || member?.email}
+              />
+            ) : (
+              <div className="rounded-3xl border border-emerald-100 bg-white p-6 shadow-sm text-center space-y-4">
+                <p className="text-3xl">🔒</p>
+                <h3 className="font-bold text-slate-800">ต้องการเขียนรีวิวใช่ไหม?</h3>
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  กรุณาเข้าสู่ระบบก่อนแสดงความคิดเห็นและให้คะแนนหนังสือเล่มนี้
+                </p>
+                <Link
+                  to="/login"
+                  className="inline-block w-full rounded-full bg-emerald-700 py-2.5 text-xs font-bold text-white transition hover:bg-emerald-800"
+                >
+                  เข้าสู่ระบบ
+                </Link>
+              </div>
+            )}
           </div>
 
           {/* ขวา: รายการรีวิวจากชุมชน */}
@@ -215,14 +251,14 @@ function BookDetail({ wishlist = [], onToggleWishlist, onAddReview }) {
                   ยังไม่มีรีวิวสำหรับหนังสือเล่มนี้
                 </p>
                 <p className="text-xs text-slate-400 mt-1">
-                  มาเป็นคนแรกที่แบ่งปันความรู้สึกกันได้ทางซ้ายมือเลย!
+                  มาเป็นคนแรกที่แบ่งปันความรู้สึกกันได้เลย!
                 </p>
               </div>
             ) : (
               <div className="space-y-4">
                 {reviewsList.map((rev) => (
                   <div
-                    key={rev.id}
+                    key={rev.id || Math.random()}
                     className="p-4 rounded-2xl bg-[#eef5f0]/60 border border-emerald-100 space-y-2"
                   >
                     <div className="flex items-center justify-between">

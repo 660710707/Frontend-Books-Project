@@ -1,49 +1,87 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-function WishlistCard({ book, onToggleWishlist }) {
+function WishlistCard({ book, wishlist = [], onToggleWishlist }) {
+  const bookId = book.id || book.isbn;
+
+  // ฟังก์ชันกลางเช็คว่าเป็นหนังสือเล่มเดียวกันหรือไม่
+  const isSameBook = (item1, item2) => {
+    if (!item1 || !item2) return false;
+    const getCode = (x) => {
+      if (typeof x === 'object' && x !== null) {
+        return String(x.isbn || x.id || x._id || '');
+      }
+      return String(x);
+    };
+    return getCode(item1) === getCode(item2);
+  };
+
+  // เช็คว่าเล่มนี้อยู่ใน wishlist หรือยัง
+  const isWishlisted = wishlist.some((item) => isSameBook(item, book));
+
+  // จัดการลิงก์รูปปก
+  const bookCover = book.isbn 
+    ? `https://covers.openlibrary.org/b/isbn/${book.isbn}-L.jpg`
+    : (book.poster || book.imageUrl || book.imageUrlM || book.imageUrlS || book.cover || book.image || book.thumbnail);
+
   return (
-    <div className="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 hover:shadow-md transition flex flex-col justify-between group">
-      <div>
-        <div className="relative aspect-[2/3] w-full rounded-2xl overflow-hidden bg-slate-100 mb-4">
-          <img
-            src={book.cover || 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&w=600&q=80'}
-            alt={book.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-          />
-          {/* ปุ่มกดเอาออกจาก Wishlist */}
-          <button
-            onClick={() => onToggleWishlist && onToggleWishlist(book.id)}
-            title="นำออกจากรายการโปรด"
-            className="absolute top-3 right-3 w-9 h-9 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center text-rose-500 hover:bg-rose-50 shadow-sm transition"
-          >
-            ❤️
-          </button>
+    <div className="bg-white rounded-3xl p-4 border border-emerald-100 shadow-sm flex flex-col justify-between relative group">
+      
+      {/* 💚 ปุ่มหัวใจมุมขวาบน: กดปุ๊บ สลับสถานะ เพิ่ม/ลบ ออกจาก Wishlist ทันที */}
+      <button
+        type="button"
+        onClick={(e) => {
+          e.preventDefault(); // ป้องกันไม่ให้ลิงก์ Card ทำงานตอนกดหัวใจ
+          e.stopPropagation();
+          if (onToggleWishlist) {
+            onToggleWishlist(book);
+          }
+        }}
+        className={`absolute top-4 right-4 z-10 w-9 h-9 rounded-full flex items-center justify-center shadow-sm transition ${
+          isWishlisted
+            ? 'bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100'
+            : 'bg-white/90 text-slate-400 hover:text-rose-500 border border-slate-100'
+        }`}
+        title={isWishlisted ? 'เอาออกจากรายการโปรด' : 'เพิ่มลงรายการโปรด'}
+      >
+        <span>{isWishlisted ? '❤️' : '🤍'}</span>
+      </button>
+
+      {/* คลิกที่การ์ดเพื่อไปหน้าดูรายละเอียด */}
+      <Link to={`/books/${bookId}`} className="block">
+        <div className="aspect-[2/3] w-full bg-[#eef5f0] rounded-2xl overflow-hidden flex items-center justify-center p-2">
+          {bookCover ? (
+            <img
+              src={bookCover}
+              alt={book.title}
+              className="w-full h-full object-cover rounded-xl"
+              onError={(e) => { e.target.style.display = 'none'; }}
+            />
+          ) : (
+            <span className="text-4xl">📚</span>
+          )}
         </div>
-
-        <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">
-          {book.genre || book.category || 'General'}
-        </span>
-
-        <Link to={`/books/${book.id}`}>
-          <h3 className="font-bold text-slate-900 text-base mt-2 line-clamp-1 hover:text-emerald-700 transition">
+        
+        <div className="mt-4 space-y-1">
+          <h3 className="font-bold text-slate-800 text-sm line-clamp-1">
             {book.title}
           </h3>
-        </Link>
-        <p className="text-xs text-slate-500 mt-0.5">{book.author}</p>
+          <p className="text-xs text-slate-500 line-clamp-1">
+            โดย {book.author || 'ไม่ระบุผู้แต่ง'}
+          </p>
+        </div>
+      </Link>
+
+      {/* เรตติ้งด้านล่างการ์ด */}
+      <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+        <span className="font-semibold text-amber-500">
+          ★ {Number(book.rating || 0).toFixed(2)}
+        </span>
+        <span className="text-emerald-700 font-medium">
+          {isWishlisted ? 'อยู่ในรายการโปรดแล้ว' : ''}
+        </span>
       </div>
 
-      <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-        <span className="text-slate-500 font-medium">
-          {book.year || '2025'} | ⭐ <strong className="text-slate-700">{book.rating || '9.0'}</strong>
-        </span>
-        <Link
-          to={`/books/${book.id}`}
-          className="text-emerald-600 font-bold hover:underline"
-        >
-          อ่านรีวิว →
-        </Link>
-      </div>
     </div>
   );
 }
