@@ -27,7 +27,6 @@ function Navbar({ wishlistCount = 0 }) { // รับค่าจำนวนร
     <header className="sticky top-0 z-50 border-b border-emerald-100 bg-white/95 shadow-sm backdrop-blur-md">
       <nav className="mx-auto flex min-h-[76px] max-w-7xl items-center justify-between gap-3 px-4 py-2 md:px-8">
 
-        {/* Logo */}
         <NavLink
           to="/"
           className="group flex shrink-0 items-center transition duration-300 hover:scale-[1.03]"
@@ -39,7 +38,6 @@ function Navbar({ wishlistCount = 0 }) { // รับค่าจำนวนร
           />
         </NavLink>
 
-        {/* Navigation */}
         <div className="flex items-center gap-1 overflow-x-auto rounded-full bg-slate-50 p-1 md:gap-2">
           {navLinks.map((link) => (
             <NavLink
@@ -73,11 +71,24 @@ function Navbar({ wishlistCount = 0 }) { // รับค่าจำนวนร
               )}
             </NavLink>
           ))}
+
+          {isAuthenticated && member?.role === 'admin' && (
+            <NavLink
+              to="/admin"
+              className={({ isActive }) =>
+                `whitespace-nowrap rounded-full px-3 py-2 text-xs font-semibold transition-all duration-200 sm:px-5 sm:text-sm ${
+                  isActive
+                    ? 'bg-emerald-600 text-white shadow-sm'
+                    : 'text-slate-600 hover:bg-emerald-50 hover:text-emerald-700'
+                }`
+              }
+            >
+              ⚙️ Admin
+            </NavLink>
+          )}
         </div>
 
-        {/* Authentication */}
         <div className="flex shrink-0 items-center gap-2">
-
           {!isAuthenticated ? (
             <Link
               to="/login"
@@ -105,7 +116,6 @@ function Navbar({ wishlistCount = 0 }) { // รับค่าจำนวนร
               </button>
             </>
           )}
-
         </div>
       </nav>
     </header>

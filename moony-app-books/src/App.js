@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -16,47 +17,73 @@ import Wishlist from './pages/Wishlist';
 
 import Login from './pages/Login';
 import Register from './pages/Register';
+import Admin from './pages/Admin';
+
+function AdminRoute() {
+  const { member, isAuthenticated } = useAuth();
+
+  if (!isAuthenticated) {
+    return <Login />;
+  }
+
+  if (member?.role !== 'admin') {
+    return <Home />;
+  }
+
+  return <Admin />;
+}
 
 function AppContent() {
-  // 1. สร้าง State สำหรับเก็บรายการโปรด และเซฟลง localStorage อัตโนมัติ
   const [wishlist, setWishlist] = useState(() => {
-    const saved = localStorage.getItem('wishlist_data');
-    return saved ? JSON.parse(saved) : [];
+    try {
+      const saved = localStorage.getItem('wishlist_data');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
   });
 
   useEffect(() => {
     localStorage.setItem('wishlist_data', JSON.stringify(wishlist));
   }, [wishlist]);
 
-  // 2. ฟังก์ชันเพิ่ม/ลบหนังสือออกจากรายการโปรด
   const handleToggleWishlist = (bookOrId) => {
     setWishlist((prev) => {
-      const targetId = typeof bookOrId === 'object' ? (bookOrId.id || bookOrId.isbn) : bookOrId;
-      
+      const targetId =
+        typeof bookOrId === 'object'
+          ? (bookOrId.id || bookOrId.isbn)
+          : bookOrId;
+
       const exists = prev.some((item) => {
-        const itemId = typeof item === 'object' ? (item.id || item.isbn) : item;
+        const itemId =
+          typeof item === 'object'
+            ? (item.id || item.isbn)
+            : item;
+
         return String(itemId) === String(targetId);
       });
 
       if (exists) {
-        // ถ้ามีอยู่แล้วให้เอาออก
         return prev.filter((item) => {
-          const itemId = typeof item === 'object' ? (item.id || item.isbn) : item;
+          const itemId =
+            typeof item === 'object'
+              ? (item.id || item.isbn)
+              : item;
+
           return String(itemId) !== String(targetId);
         });
-      } else {
-        // ถ้ายังไม่มีและส่งมาเป็น Object ให้เพิ่มเข้าไป
-        if (typeof bookOrId === 'object') {
-          return [...prev, bookOrId];
-        }
-        return prev;
       }
+
+      if (typeof bookOrId === 'object' && bookOrId !== null) {
+        return [...prev, bookOrId];
+      }
+
+      return prev;
     });
   };
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50">
-      {/* ส่งจำนวน wishlist ไปแสดงที่ Navbar */}
       <Navbar wishlistCount={wishlist.length} />
 
       <main className="flex-1">
@@ -64,37 +91,37 @@ function AppContent() {
           <Route path="/" element={<Home />} />
           <Route path="/books" element={<Books />} />
           <Route path="/about" element={<About />} />
-          
-          {/* ส่ง props ไปที่หน้า BookDetail */}
-          <Route 
-            path="/books/:id" 
+
+          <Route
+            path="/books/:id"
             element={
-              <BookDetail 
-                wishlist={wishlist} 
-                onToggleWishlist={handleToggleWishlist} 
+              <BookDetail
+                wishlist={wishlist}
+                onToggleWishlist={handleToggleWishlist}
               />
-            } 
+            }
           />
 
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/playground" element={<Playground />} />
-          
-          {/* ส่ง props ไปที่หน้า Wishlist */}
-          <Route 
-            path="/wishlist" 
+
+          <Route
+            path="/wishlist"
             element={
-              <Wishlist 
-                wishlist={wishlist} 
-                onToggleWishlist={handleToggleWishlist} 
+              <Wishlist
+                wishlist={wishlist}
+                onToggleWishlist={handleToggleWishlist}
               />
-            } 
+            }
           />
+
+          <Route path="/admin" element={<AdminRoute />} />
 
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
-        
+
       <Footer />
     </div>
   );
