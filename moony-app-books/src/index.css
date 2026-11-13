@@ -1,5 +1,5 @@
 
-@import url('https://fonts.googleapis.com/css2?family=Itim&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Prompt&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -7,12 +7,12 @@
 
 html,
 body {
-  font-family: 'Itim', cursive;
+  font-family: 'Prompt', sans-serif;
 }
 
 button,
 input,
 textarea,
 select {
-  font: inherit;
+  font: 'Prompt', sans-serif;
 }
